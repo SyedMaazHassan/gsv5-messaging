@@ -1,0 +1,289 @@
+{% load static %}
+
+{% include 'inc/head.inc.html' %}
+{% include 'inc/navbar.inc.html' %}
+
+<body>
+    <br>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-4 py-4">
+                {% for myUser in all_users %}
+                <a class="text-secondary" href="chat/{{myUser.id}}" style="text-decoration: none;">
+                    <div class="card profile {% if myUser.id == selected.id %}border-info{% endif %}" style="border-radius: 0px;">
+                        <!--tips: add .text-center,.text-right to the .card to change card text alignment-->
+                        <div class="card-body d-flex align-items-center">
+                            <i class="material-icons bg-secondary text-white p-3" 
+                               style="font-size: 30px; border-radius: 100%; display: inline-block;">
+                               group
+                            </i>
+    
+                            <div class="p-2">
+                                <h6 class="card-subtitle mb-2 text-muted">{{myUser.first_name}} {{myUser.last_name}}</h6>
+                                <p class="card-text">{{myUser.username}}</p>
+                            </div>
+    
+                        </div>
+                    </div>
+                </a>
+             
+                {% endfor %}
+
+            </div>
+
+            <div class="col-sm-8 py-4">
+                <main id="main" class="border-info pb-0">
+
+                    <!-- ======= About Section ======= -->
+                    <section id="">
+                      <div class="container">
+                          
+                        <div class="row">
+                          
+                
+                          <div class="col-lg-12 pt-0 pt-lg-0 px-0">
+                            
+                
+                            <!-- messages section -->
+                            
+                            <div class="inner-profile-second-section-a py-3 p-3" style="width: 100%;">
+                                <div class="row" style="box-shadow:0px 5px 5px #f2f2f2;">
+                                    <div class="col-12 px-4 py-1">
+                                        <h3>{{ second_person.first_name }} {{ second_person.last_name }}</h3>
+                                        <p class="para-grey">Last seen: {{ second_person.last_login }}</p>
+                                    </div>
+                                </div>
+                                <div class="row mx-0 px-0 chatting" id="myChat">
+                                    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 py-2" id="msg_container">
+                                        
+                
+                
+                                        {% for msg in all_msgs %}
+                
+                                        <div class="row px-3 py-0" id="msg_{{msg.0}}">
+                                            <div class="col-xl-12 p-0">
+                                                <div class="message-div {% if msg.4 == user.id %} first-person float-right {% else %} second-person float-left {% endif %}">
+                                                    {{ msg.1 }}
+                                                </div>
+                                            </div>
+                                        </div>
+                
+                                       
+                
+                                        {% endfor %}
+                                    
+                
+                
+                
+                             
+                                    </div>                   
+                                </div> 
+                
+                                <div class="row pt-4 px-0 pb-0" style="box-shadow:0px -5px 5px #f2f2f2;">
+                                    
+                                    <div class="col-12 d-flex justify-content-center align-items-center">
+                                        <!-- <i class="material-icons cart cart-sec2 mx-3">insert_photo</i> -->
+                                        <input type="text" class="form-control my-1 mx-2" placeholder="Type a message..." style="background-color:#f4f4f4; height: 40px;" id="myMsg">
+                                        <i class="material-icons cart cart-sec2 mx-3 bg-info text-white" onclick="send_msg()">send</i>
+                                    </div>
+                                </div>
+
+                            </div>
+                            
+                          </div>
+                          <br>
+
+
+                          <audio id="audio" src="{% static 'notify.mp3' %}" style="opacity: 0;"></audio>
+                          <button type="button" id="play_btn" class="" onclick="play()" style="opacity: 0;">Play</button>
+                
+                
+                        </div>
+                
+                      </div>
+                    </section>
+                    <!-- End About Section -->
+            
+                </main>
+
+                <br>
+            </div>
+           
+        </div>
+    </div>
+
+
+</body>
+
+
+
+<script>
+        var all_children = $("#msg_container").children().length;
+
+// console.log(all_children);
+
+String.prototype.insert = function(index, string) {
+    if (index > 0) {
+        return this.substring(0, index) + string + this.substr(index);
+    }
+
+    return string + this;
+};
+
+
+function send_msg() {
+    var myMsg = $("#myMsg").val();
+
+    if (myMsg != "" && myMsg) {
+        // console.log(myMsg);
+
+        var original = myMsg;
+        var word_list = myMsg.split(" ");
+
+        for (let i = 0; i < word_list.length; i++) {
+            var element = word_list[i];
+            if (element.length > 38) {
+                var num = Math.floor(element.length / 38);
+                
+                for (let j = 0; j < num; j++) {
+    
+                    word_list[i] = word_list[i].insert((j+1)*38, "<br>");
+                    
+                }
+            }
+        }
+
+        myMsg = word_list.join(" ");
+
+        $("#msg_container").append(`
+        
+            <div class="row px-3 py-0">
+                <div class="col-xl-12 p-0">
+                    <div class="message-div first-person float-right">
+                        ${myMsg}
+                    </div>
+                </div>
+            </div>
+    
+        `);
+
+        all_children = $("#msg_container").children().length;
+
+        $("#myMsg").val("");
+
+        cast_msg(original);
+
+        scrollSmoothToBottom("myChat");
+
+
+    }
+}
+
+function cast_msg(msg) {
+    var to = '{{ second_person.id }}';
+    $.ajax({
+        url: "{% url 'sendMsg' %}",
+        type: "GET",
+        data: `to=${to}&msg=${msg}`,
+        success: (response)=>{
+            // console.log(response);
+
+            all_children = $("#msg_container").children().length;
+            // console.log(all_children);
+
+        }
+    })
+}
+
+function scrollSmoothToBottom (id) {
+    var div = document.getElementById(id);
+    div.scrollTop = div.scrollHeight;
+   
+    // console.log("Scrolled")
+}
+
+document.addEventListener('keyup', event => {
+
+  let conditions = (event.which == 13 || event.code == "Enter");
+
+  if (conditions) {
+
+    //   console.log("Enter");
+      send_msg()
+  }
+
+});
+
+function play() {
+    var audio = document.getElementById("audio");
+    audio.play();
+}
+
+
+function get_msgs() {
+  var to = '{{ second_person.id }}';
+  all_children = $("#msg_container").children().length;
+  $.ajax({
+      url: "{% url 'getMsgs' %}",
+      type: "GET",
+      data: `to=${to}&msg_present=${all_children}`,
+      success: (response)=>{
+          if (response.status) {
+            //   console.log(response);
+              if (response.all_msgs.length > 0) {
+                    $("#play_btn").click();
+              }
+
+              for (let i = 0; i < response.all_msgs.length; i++) {
+                  let single_msg = response.all_msgs[i];
+
+                   if (parseInt(single_msg[4]) == parseInt("{{user.id}}")) {
+
+                        $("#msg_container").append(`
+            
+                            <div class="row px-3 py-0">
+                                <div class="col-xl-12 p-0">
+                                    <div class="message-div first-person float-right">
+                                        ${single_msg[1]}
+                                    </div>
+                                </div>
+                            </div>
+                    
+                        `);
+                       
+                   }else{
+
+                        $("#msg_container").append(`
+                
+                            <div class="row px-3 py-0">
+                                <div class="col-xl-12 p-0">
+                                    <div class="message-div second-person float-left">
+                                        ${single_msg[1]}
+                                    </div>
+                                </div>
+                            </div>
+                    
+                        `);
+                   }
+              }
+
+              all_children = $("#msg_container").children().length;
+
+              scrollSmoothToBottom("myChat");
+
+          }
+      }
+  });
+
+//   console.log("get msgs");
+}
+
+setInterval(get_msgs, 200)
+
+scrollSmoothToBottom("myChat");
+
+
+</script>
+
+
+</html>

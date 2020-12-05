@@ -1,0 +1,31 @@
+{% load static %}
+
+{% include 'inc/head.inc.html' %}
+{% include 'inc/navbar.inc.html' %}
+
+<body>
+    <br>
+
+    <div class="container">
+        <div class="row">
+            {% for myUser in all_users %}
+
+                {% if myUser.username != user.username %}
+                    <div class="col-sm-4 my-2">
+                        <div class="card profile">
+                            <div class="card-body text-center">
+                                <i class="material-icons bg-secondary text-white p-3" style="font-size: 50px; border-radius: 100%;">group</i>
+                                <h5 class="card-title my-3">{{myUser.first_name}} {{myUser.last_name}}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">{{myUser.email}}</h6>
+                                <a href="chat/{{myUser.id}}" class="btn btn-info mt-2">Send message</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+
+</body>
+</html>
